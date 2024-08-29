@@ -13,7 +13,7 @@ from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 
 # Read data
-data_dir="/lscratch/34740217/pannuke/fold1"
+data_dir="/lscratch/{}/pannuke/fold1".format(os.environ["SLURM_JOB_ID"])
 data=[] # list of files in dataset
 for ff, name in enumerate(os.listdir(data_dir+"/images/")):  # go over all folder annotation
     data.append({"image":data_dir+"/images/"+name,"annotation":data_dir+"/labels/"+name[:-4]+".npy"})
@@ -46,7 +46,9 @@ def read_batch(data): # read random image and its annotaion from  the dataset (L
         yx = np.array(coords[np.random.randint(len(coords))]) # choose random point/coordinate
         points.append([[yx[1], yx[0]]])
         labels.append(type_map[yx[0], yx[1]])
-    return Img,np.array(masks),np.array(points), np.array(labels).reshape(-1, 1),img_prefix
+    # return Img,np.array(masks),np.array(points), np.array(labels).reshape(-1, 1),img_prefix
+    return Img,np.array(masks),np.array(points),np.ones([len(masks), 1]),img_prefix
+
 
 # Load model
 

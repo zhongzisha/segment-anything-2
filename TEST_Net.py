@@ -13,11 +13,16 @@ torch.autocast(device_type="cuda", dtype=torch.bfloat16).__enter__()
 
 image_path = r"sample_image.jpg" # path to image
 mask_path = r"sample_mask.png" # path to mask, the mask will define the image region to segment
+image_path = '/lscratch/34819899/pannuke/fold1/images/1_1790.png' # sys.argv[1]   # '/home/zhongz2/my_llava/examples/figure-002-a71770_large.jpg'
+mask_path = '/lscratch/34819899/pannuke/fold1/labels/1_1790.npy' # sys.argv[2]  
 
 def read_image(image_path, mask_path): # read and resize image and mask
         img = cv2.imread(image_path)[...,::-1]  # read image as rgb
-        mask = cv2.imread(mask_path,0) # mask of the region we want to segment
-
+        # mask = cv2.imread(mask_path,0) # mask of the region we want to segment
+        masks = np.load(mask_path, allow_pickle=True)
+        inst_map = masks[()]["inst_map"].astype(np.int32)
+        type_map = masks[()]["type_map"].astype(np.int32)
+        mask = type_map
         # Resize image to maximum size of 1024
 
         r = np.min([1024 / img.shape[1], 1024 / img.shape[0]])
@@ -26,19 +31,28 @@ def read_image(image_path, mask_path): # read and resize image and mask
         return img, mask
 image,mask = read_image(image_path, mask_path)
 num_samples = 30 # number of points/segment to sample
-def get_points(mask,num_points): # Sample points inside the input mask
-        points=[]
-        for i in range(num_points):
-            coords = np.argwhere(mask > 0)
-            yx = np.array(coords[np.random.randint(len(coords))])
-            points.append([[yx[1], yx[0]]])
-        return np.array(points)
+num_samples = 0
+def get_points(mask,num_points=0): # Sample points inside the input mask
+        if num_points==0:
+            height, width = mask.shape[:2]
+            xs = np.arange(50, width-50, 50)
+            ys = np.arange(50, height-50, 50)
+            points = np.stack(np.meshgrid(xs, ys)).reshape(2, -1).T[:, None, :]
+        else:
+            points=[]
+            for i in range(num_points):
+                coords = np.argwhere(mask > 0)
+                yx = np.array(coords[np.random.randint(len(coords))])
+                points.append([[yx[1], yx[0]]])
+            points = np.array(points)
+        return points
 input_points = get_points(mask,num_samples)
+print('input_points', input_points.shape)
 # read image and sample points
 
 
 # Load model you need to have pretrained model already made
-sam2_checkpoint = "sam2_hiera_small.pt" # "sam2_hiera_large.pt"
+sam2_checkpoint = "checkpoints/sam2_hiera_small.pt" # "sam2_hiera_large.pt"
 model_cfg = "sam2_hiera_s.yaml" # "sam2_hiera_l.yaml"
 sam2_model = build_sam2(model_cfg, sam2_checkpoint, device="cuda")
 
@@ -49,11 +63,11 @@ predictor.model.load_state_dict(torch.load("model.torch"))
 # predict mask
 
 with torch.no_grad():
-        predictor.set_image(image)
-        masks, scores, logits = predictor.predict(
-            point_coords=input_points,
-            point_labels=np.ones([input_points.shape[0],1])
-        )
+    predictor.set_image(image)
+    masks, scores, logits = predictor.predict(
+        point_coords=input_points,
+        point_labels=np.ones([input_points.shape[0],1])
+    )
 
 # Short predicted masks from high to low score
 
