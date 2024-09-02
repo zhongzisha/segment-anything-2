@@ -13,10 +13,10 @@ from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 
 # Read data
-data_dir="/lscratch/{}/pannuke/fold1".format(os.environ["SLURM_JOB_ID"])
+data_dir="/lscratch/{}/pannuke".format(os.environ["SLURM_JOB_ID"])
 data=[] # list of files in dataset
-for ff, name in enumerate(os.listdir(data_dir+"/images/")):  # go over all folder annotation
-    data.append({"image":data_dir+"/images/"+name,"annotation":data_dir+"/labels/"+name[:-4]+".npy"})
+for ff, name in enumerate(os.listdir(data_dir+"/all_images/")):  # go over all folder annotation
+    data.append({"image":data_dir+"/all_images/"+name,"annotation":data_dir+"/all_labels/"+name[:-4]+".npy"})
 
 def read_batch(data): # read random image and its annotaion from  the dataset (LabPics)
     ent  = data[np.random.randint(len(data))] # choose random entry

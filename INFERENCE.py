@@ -12,8 +12,8 @@ import utils
 
 
 # load image
-image_path = '/lscratch/34819899/pannuke/fold1/images/1_1790.png' # sys.argv[1]  
-mask_path = '/lscratch/34819899/pannuke/fold1/labels/1_1790.npy' # sys.argv[2]  
+image_path = '/lscratch/{}/pannuke/all_images/1_1790.png'.format(os.environ['SLURM_JOB_ID']) # sys.argv[1]  
+mask_path = '/lscratch/{}/pannuke/all_labels/1_1790.npy'.format(os.environ['SLURM_JOB_ID']) # sys.argv[2]  
 image_path = '/home/zhongz2/my_llava/examples/figure-002-a71770_large.jpg'
 image = cv2.imread(image_path)[...,::-1]  # read image as rgb
 r = np.min([1024 / image.shape[1], 1024 / image.shape[0]])
